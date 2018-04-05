@@ -1,2 +1,3 @@
-127.0.0.1:::testInput:::127.0.0.1:::testOutput:::localCommand
+8080
+127.0.0.1:::testInput:::127.0.0.1:8080/testOutput:::localCommand
 127.0.0.1:::testOutput::: ::: :::localCommand
