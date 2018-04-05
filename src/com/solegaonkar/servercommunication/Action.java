@@ -11,16 +11,16 @@ import java.util.ArrayList;
 import com.sun.net.httpserver.HttpExchange;
 
 /**
- * The task to be performed on a local or external request
+ * Action corresponds to a record in the config file. It defines the source and
+ * target along with any local command that needs to be run.
  * 
  * @author vs0016025
  *
  */
 public class Action implements Runnable {
 	private String sourceIp;
-	private String targetIp;
+	private String targetUrl;
 	private String method;
-	private String targetMethod;
 	private String localCommand;
 	private ActionInvocationListener hook;
 
@@ -99,8 +99,8 @@ public class Action implements Runnable {
 	 * @throws Exception
 	 */
 	private void forwardHttpRequest(ArrayList<String> parameters) throws Exception {
-		if (targetIp.length() > 0) {
-			URL url = new URL("http://" + targetIp + "/" + targetMethod + parameters.get(0));
+		if (targetUrl.length() > 0) {
+			URL url = new URL("http://" + targetUrl + parameters.get(0));
 			HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 			connection.setRequestMethod("GET");
 			connection.connect();
@@ -135,8 +135,8 @@ public class Action implements Runnable {
 	 */
 	@Override
 	public String toString() {
-		return "Action [sourceIp=" + sourceIp + ", targetIp=" + targetIp + ", method=" + method + ", targetMethod="
-				+ targetMethod + ", localCommand=" + localCommand + "]";
+		return "Action [sourceIp=" + sourceIp + ", targetIp=" + targetUrl + ", method=" + method + ", targetMethod="
+				+ ", localCommand=" + localCommand + "]";
 	}
 
 	/**
@@ -158,7 +158,7 @@ public class Action implements Runnable {
 	 * @return the targetIp
 	 */
 	public String getTargetIp() {
-		return targetIp;
+		return targetUrl;
 	}
 
 	/**
@@ -166,7 +166,7 @@ public class Action implements Runnable {
 	 *            the targetIp to set
 	 */
 	public void setTargetIp(String targetIp) {
-		this.targetIp = targetIp;
+		this.targetUrl = targetIp;
 	}
 
 	/**
@@ -182,21 +182,6 @@ public class Action implements Runnable {
 	 */
 	public void setMethod(String method) {
 		this.method = method;
-	}
-
-	/**
-	 * @return the targetMethod
-	 */
-	public String getTargetMethod() {
-		return targetMethod;
-	}
-
-	/**
-	 * @param targetMethod
-	 *            the targetMethod to set
-	 */
-	public void setTargetMethod(String targetMethod) {
-		this.targetMethod = targetMethod;
 	}
 
 	/**
