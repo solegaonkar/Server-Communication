@@ -3,14 +3,10 @@ package com.solegaonkar.servercommunication;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
-import java.net.URL;
-import java.util.ArrayList;
 import java.util.HashMap;
 
+import com.solegaonkar.servercommunication.Action.ActionInvocationListener;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
@@ -59,7 +55,7 @@ public class Communicator {
 	public static boolean addHook(String methodName, ActionInvocationListener hook) {
 		Action a = methods.get(methodName);
 		if (a != null) {
-			a.hook = hook;
+			a.setHook(hook);
 			return true;
 		}
 		return false;
@@ -89,12 +85,12 @@ public class Communicator {
 		while ((configLine = br.readLine()) != null) {
 			String[] config = configLine.split(":::");
 			Action a = new Action();
-			a.sourceIp = config[0].trim();
-			a.method = config[1].trim();
-			a.targetIp = config[2].trim();
-			a.targetMethod = config[3].trim();
-			a.localCommand = config[4].trim();
-			methods.put(a.method, a);
+			a.setSourceIp(config[0].trim());
+			a.setMethod(config[1].trim());
+			a.setTargetIp(config[2].trim());
+			a.setTargetMethod(config[3].trim());
+			a.setLocalCommand(config[4].trim());
+			methods.put(a.getMethod(), a);
 		}
 		br.close();
 	}
@@ -108,7 +104,7 @@ public class Communicator {
 	private static void createServer() throws Exception {
 		HttpServer server = HttpServer.create(new InetSocketAddress(80), 0);
 		for (String key : methods.keySet()) {
-			server.createContext("/" + methods.get(key).method, new CustomHandler(methods.get(key)));
+			server.createContext("/" + methods.get(key).getMethod(), new CustomHandler(methods.get(key)));
 		}
 		server.setExecutor(null); // creates a default executor
 		server.start();
@@ -142,139 +138,4 @@ public class Communicator {
 	 * @author vs0016025
 	 *
 	 */
-	static class Action implements Runnable {
-		private String sourceIp;
-		private String targetIp;
-		private String method;
-		private String targetMethod;
-		private String localCommand;
-		private ActionInvocationListener hook;
-
-		private HttpExchange exchange;
-
-		/**
-		 * Initiate the action in a new thread.
-		 * 
-		 * @param exchange
-		 */
-		public void initiate(HttpExchange exchange) {
-			this.exchange = exchange;
-			new Thread(this).start();
-		}
-
-		/**
-		 * Execute the configured action. Invoke the HTTP Request / Local Command if
-		 * configured.
-		 */
-		public void run() {
-			try {
-				if (exchange == null || sourceIp.equals(exchange.getRemoteAddress().getHostString())) {
-					ArrayList<String> parameters = getParameters();
-					forwardHttpRequest(parameters);
-					invokeHook(parameters);
-					runLocalCommand(parameters);
-				}
-				respond();
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		}
-
-		private void respond() throws IOException {
-			if (exchange != null) {
-				String response = "Response";
-				exchange.sendResponseHeaders(200, response.length());
-				OutputStream os = exchange.getResponseBody();
-				os.write(response.getBytes());
-				os.close();
-			}
-		}
-
-		/**
-		 * If the action has a hook, invoke it in the same thread.
-		 */
-		private void invokeHook(ArrayList<String> parameters) {
-			if (hook != null) {
-				hook.run(parameters);
-			}
-		}
-
-		/**
-		 * Run the local command if configured.
-		 * 
-		 * @param parameters
-		 * @throws IOException
-		 */
-		private void runLocalCommand(ArrayList<String> parameters) throws IOException {
-			if (localCommand.length() > 0) {
-				StringBuilder sb = new StringBuilder();
-				sb.append(localCommand);
-				sb.append(" ");
-				for (int i = 1; i < parameters.size(); i++) {
-					sb.append(parameters.get(i));
-					sb.append(" ");
-				}
-				Runtime.getRuntime().exec(sb.toString());
-			}
-		}
-
-		/**
-		 * Forward to HTTP Request if configured
-		 * 
-		 * @param parameters
-		 * @throws Exception
-		 */
-		private void forwardHttpRequest(ArrayList<String> parameters) throws Exception {
-			if (targetIp.length() > 0) {
-				URL url = new URL("http://" + targetIp + "/" + targetMethod + parameters.get(0));
-				HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-				connection.setRequestMethod("GET");
-				connection.connect();
-				new BufferedReader(new InputStreamReader(connection.getInputStream())).readLine();
-				connection.disconnect();
-			}
-		}
-
-		/**
-		 * Get parameters of the input HTTP Request
-		 * 
-		 * @return
-		 */
-		private ArrayList<String> getParameters() {
-			ArrayList<String> parameters = new ArrayList<>();
-			String[] ext = exchange.getRequestURI().toString().split("\\?");
-			if (ext.length > 1) {
-				parameters.add("?" + ext[1]);
-				for (String x : ext[1].split("&")) {
-					parameters.add(x);
-				}
-			} else {
-				parameters.add("");
-			}
-			return parameters;
-		}
-
-		/*
-		 * (non-Javadoc)
-		 * 
-		 * @see java.lang.Object#toString()
-		 */
-		@Override
-		public String toString() {
-			return "Action [sourceIp=" + sourceIp + ", targetIp=" + targetIp + ", method=" + method + ", targetMethod="
-					+ targetMethod + ", localCommand=" + localCommand + "]";
-		}
-
-		/**
-		 * @param hook
-		 *            the hook to set
-		 */
-		public void setHook(ActionInvocationListener hook) {
-			this.hook = hook;
-		}
-	}
-	
-	public interface ActionInvocationListener {
-		public void run(ArrayList<String> parameters);
-	}
 }
