@@ -21,6 +21,7 @@ import com.sun.net.httpserver.HttpServer;
 public class Communicator {
 	private static HashMap<String, Action> methods = new HashMap<>();
 	private static final String ConfigFilePath = "ConfigFile.txt";
+	private static int port;
 
 	/**
 	 * If you want to run this stand alone, start here.
@@ -82,14 +83,14 @@ public class Communicator {
 		// Create the methods map
 		BufferedReader br = new BufferedReader(new FileReader(ConfigFilePath));
 		String configLine = "";
+		port = Integer.parseInt(br.readLine());
 		while ((configLine = br.readLine()) != null) {
 			String[] config = configLine.split(":::");
 			Action a = new Action();
 			a.setSourceIp(config[0].trim());
 			a.setMethod(config[1].trim());
 			a.setTargetIp(config[2].trim());
-			a.setTargetMethod(config[3].trim());
-			a.setLocalCommand(config[4].trim());
+			a.setLocalCommand(config[3].trim());
 			methods.put(a.getMethod(), a);
 		}
 		br.close();
@@ -102,7 +103,7 @@ public class Communicator {
 	 * @throws Exception
 	 */
 	private static void createServer() throws Exception {
-		HttpServer server = HttpServer.create(new InetSocketAddress(80), 0);
+		HttpServer server = HttpServer.create(new InetSocketAddress(port), 0);
 		for (String key : methods.keySet()) {
 			server.createContext("/" + methods.get(key).getMethod(), new CustomHandler(methods.get(key)));
 		}
