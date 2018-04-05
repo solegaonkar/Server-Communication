@@ -27,14 +27,41 @@ public class Server {
 	private static final String ConfigFilePath = "ConfigFile.txt";
 
 	/**
-	 * Main method, reads the config file and initiates the HTTP Server.
+	 * If you want to run this stand alone, start here.
 	 * 
 	 * @param args
 	 * @throws Exception
 	 */
 	public static void main(String[] args) throws Exception {
+		initiate();
+	}
+
+	/**
+	 * Start here if you want to run this along with an existing Java Application.
+	 * Reads the config file and initiates the HTTP Server.
+	 * 
+	 * @throws Exception
+	 */
+	public static void initiate() throws Exception {
 		readConfig();
 		createServer();
+	}
+
+	/**
+	 * If you are running as a part of a Java application, add a Runnable to be
+	 * invoked when the method is invoked. The hook will run within the client thread.
+	 * 
+	 * @param methodName
+	 * @param hook
+	 * @return
+	 */
+	public static boolean addHook(String methodName, Runnable hook) {
+		Action a = methods.get(methodName);
+		if (a != null) {
+			a.hook = hook;
+			return true;
+		}
+		return false;
 	}
 
 	/**
@@ -108,6 +135,7 @@ public class Server {
 		private String method;
 		private String targetMethod;
 		private String localCommand;
+		private Runnable hook;
 
 		private HttpExchange exchange;
 
@@ -130,6 +158,7 @@ public class Server {
 				if (sourceIp.equals(exchange.getRemoteAddress().getHostString())) {
 					ArrayList<String> parameters = getParameters();
 					forwardHttpRequest(parameters);
+					invokeHook();
 					runLocalCommand(parameters);
 				}
 				String response = "Response";
@@ -137,10 +166,17 @@ public class Server {
 				OutputStream os = exchange.getResponseBody();
 				os.write(response.getBytes());
 				os.close();
-			} catch (
-
-			Exception e) {
+			} catch (Exception e) {
 				e.printStackTrace();
+			}
+		}
+
+		/**
+		 * If the action has a hook, invoke it in the same thread.
+		 */
+		private void invokeHook() {
+			if (hook != null) {
+				hook.run();
 			}
 		}
 
@@ -208,6 +244,14 @@ public class Server {
 		public String toString() {
 			return "Action [sourceIp=" + sourceIp + ", targetIp=" + targetIp + ", method=" + method + ", targetMethod="
 					+ targetMethod + ", localCommand=" + localCommand + "]";
+		}
+
+		/**
+		 * @param hook
+		 *            the hook to set
+		 */
+		public void setHook(Runnable hook) {
+			this.hook = hook;
 		}
 
 	}
