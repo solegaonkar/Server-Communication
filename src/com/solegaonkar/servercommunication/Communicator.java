@@ -130,13 +130,4 @@ public class Communicator {
 			action.initiate(exchange);
 		}
 	}
-
-	/**
-	 * Action corresponds to a record in the config file. It defines the source and
-	 * target IP Addresses as well as the source and target methods along with any
-	 * local command that needs to be run.
-	 * 
-	 * @author vs0016025
-	 *
-	 */
 }
