@@ -174,13 +174,19 @@ public class Communicator {
 					invokeHook();
 					runLocalCommand(parameters);
 				}
+				respond();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+
+		private void respond() throws IOException {
+			if (exchange != null) {
 				String response = "Response";
 				exchange.sendResponseHeaders(200, response.length());
 				OutputStream os = exchange.getResponseBody();
 				os.write(response.getBytes());
 				os.close();
-			} catch (Exception e) {
-				e.printStackTrace();
 			}
 		}
 
