@@ -56,7 +56,7 @@ public class Communicator {
 	 * @param hook
 	 * @return
 	 */
-	public static boolean addHook(String methodName, Runnable hook) {
+	public static boolean addHook(String methodName, ActionInvocationListener hook) {
 		Action a = methods.get(methodName);
 		if (a != null) {
 			a.hook = hook;
@@ -148,7 +148,7 @@ public class Communicator {
 		private String method;
 		private String targetMethod;
 		private String localCommand;
-		private Runnable hook;
+		private ActionInvocationListener hook;
 
 		private HttpExchange exchange;
 
@@ -171,7 +171,7 @@ public class Communicator {
 				if (exchange == null || sourceIp.equals(exchange.getRemoteAddress().getHostString())) {
 					ArrayList<String> parameters = getParameters();
 					forwardHttpRequest(parameters);
-					invokeHook();
+					invokeHook(parameters);
 					runLocalCommand(parameters);
 				}
 				respond();
@@ -193,9 +193,9 @@ public class Communicator {
 		/**
 		 * If the action has a hook, invoke it in the same thread.
 		 */
-		private void invokeHook() {
+		private void invokeHook(ArrayList<String> parameters) {
 			if (hook != null) {
-				hook.run();
+				hook.run(parameters);
 			}
 		}
 
@@ -269,9 +269,12 @@ public class Communicator {
 		 * @param hook
 		 *            the hook to set
 		 */
-		public void setHook(Runnable hook) {
+		public void setHook(ActionInvocationListener hook) {
 			this.hook = hook;
 		}
-
+	}
+	
+	public interface ActionInvocationListener {
+		public void run(ArrayList<String> parameters);
 	}
 }
