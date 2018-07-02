@@ -4,4 +4,4 @@ Framework and Utility to enable communication between servers. Based on HTTP, it
 
 The utility should run on all the concerned servers and configured by a file ConfigFile.txt - in the working folder. 
 
-You might have problems with com.sun* Refer https://stackoverflow.com/questions/13155734/eclipse-cant-recognize-com-sun-net-httpserver-httpserver-package  for fixing that problem
+You might have problems with com.sun* imports. Refer https://stackoverflow.com/questions/13155734/eclipse-cant-recognize-com-sun-net-httpserver-httpserver-package  for fixing that problem
